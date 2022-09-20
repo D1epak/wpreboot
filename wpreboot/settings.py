@@ -85,24 +85,24 @@ WSGI_APPLICATION = 'wpreboot.wsgi.application'
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
 # Development - шаблон базы данных для тестирования
-# DATABASES = {
-#    'default': {
-#        'ENGINE': 'django.db.backends.sqlite3',
-#        'NAME': BASE_DIR / 'db.sqlite3',
-#    }
-# }
-
-# Production - Прод версия базы данных для запуска на сервере
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'myproject',
-        'USER': 'myprojectuser',
-        'PASSWORD': 'password',
-        'HOST': 'localhost',
-        'PORT': '',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# Production - Прод версия базы данных для запуска на сервере
+# DATABASES = {
+#    'default': {
+#        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#        'NAME': 'myproject',
+#        'USER': 'myprojectuser',
+#        'PASSWORD': 'password',
+#        'HOST': 'localhost',
+#        'PORT': '',
+#    }
+# }
 
 # Ckeditor code review
 # https://russianblogs.com/article/5550650974/
