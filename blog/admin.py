@@ -7,8 +7,10 @@ from django.utils.safestring import mark_safe
 from . import models
 
 
-# Пост на сайте
 class PostAdminForm(forms.ModelForm):
+    """
+    Инициализация модели базы данных для управления в админ панели
+    """
     content = forms.CharField(widget=CKEditorWidget())
 
     class Meta:
@@ -17,6 +19,11 @@ class PostAdminForm(forms.ModelForm):
 
 
 class PostAdmin(admin.ModelAdmin):
+    """
+    Класс управления админ панелью и ее кастомизации
+    Добавление элементов управления админ панелью
+    Добавление миниатюр и slug поля при создании поста
+    """
     form = PostAdminForm
     list_display = ('get_html_photo', 'title', 'date', 'slug')
     list_filter = ['date']

@@ -2,12 +2,9 @@ import re
 import urllib.request as urllib2
 from random import choice
 from urllib.error import URLError, HTTPError
-
 from django.core.files.base import File
 from django.core.files.temp import NamedTemporaryFile
-from django.core.paginator import Paginator
-from django.shortcuts import render
-from django.views.generic import ListView, DetailView, TemplateView
+from django.views.generic import ListView, TemplateView
 from pytils.translit import slugify
 from randomfilestorage.storage import RandomFileSystemStorage
 from rest_framework import status
@@ -18,6 +15,10 @@ from blog.models import Post
 
 
 class Index(TemplateView):
+    """
+    Класс отображения главной страницы
+    использует методы контекстной обработки модели
+    """
     template_name = 'theme/page/index.html'
 
     def get_context_data(self, **kwargs):
@@ -32,6 +33,10 @@ class Index(TemplateView):
 
 
 class PostDetail(TemplateView):
+    """
+    Класс отображения страницы детального просмотра поста
+    использует методы контекстной обработки модели
+    """
     template_name = 'theme/page/detail.html'
 
     def get_context_data(self, **kwargs):
@@ -47,16 +52,25 @@ class PostDetail(TemplateView):
 
 
 class YandexTurbo(ListView):
+    """
+    Класс отображения страницы плагина yandex_turbo
+    использует методы стандартный метод обработки модели
+    и пагинацию на условии: 1000 постов на 1 странице
+    """
     template_name = 'theme/addon/yandex_turbo/turbo.xml'
     model = Post
     context_object_name = 'turbo'
     paginate_by = 1000
 
 
+# Объявление переменной для библиотеки django-random-filestorage
 random_storage = RandomFileSystemStorage(location='/media/')
 
 
 class ParceObjects(APIView):
+    """
+    Класс DRF создания поста в блог используя API
+    """
     image = []
 
     def get(self, request, *args, **kwargs):
