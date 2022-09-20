@@ -1,27 +1,26 @@
-import os
 import re
-import requests
 import urllib.request as urllib2
+from random import choice
 from urllib.error import URLError, HTTPError
 
-from django.core.files.base import ContentFile, File
+from django.core.files.base import File
 from django.core.files.temp import NamedTemporaryFile
+from django.core.paginator import Paginator
 from django.shortcuts import render
-from django.views.generic import ListView, DetailView
-
+from django.views.generic import ListView, DetailView, TemplateView
+from pytils.translit import slugify
 from randomfilestorage.storage import RandomFileSystemStorage
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from random import choice
+
 from blog.models import Post
-from pytils.translit import slugify
 
 
-class Index(ListView):
-    template_name = 'index.html'
+class Index(TemplateView):
+    template_name = 'theme/page/index.html'
 
-    def get(self, request):
+    def get_context_data(self, **kwargs):
         slider = Post.objects.order_by('-date').order_by("?")[0:4]
         post = Post.objects.order_by('-date')[0:6]
 
@@ -29,14 +28,14 @@ class Index(ListView):
             'slider': slider,
             'post': post
         }
-        return render(request, self.template_name, context)
+        return context
 
 
-class PostDetail(DetailView):
-    template_name = 'Template/post-card.html'
+class PostDetail(TemplateView):
+    template_name = 'theme/page/detail.html'
 
-    def get(self, request, slug):
-        post = Post.objects.get(slug=slug)
+    def get_context_data(self, **kwargs):
+        post = Post.objects.get(slug=kwargs['slug'])
         share = Post.objects.order_by('-date').order_by("?")[0:8]
         share_left = Post.objects.order_by('-date').order_by("?")[0:5]
         context = {
@@ -44,18 +43,11 @@ class PostDetail(DetailView):
             'share': share,
             'share_left': share_left,
         }
-        return render(request, self.template_name, context)
-
-
-class UrlAll(ListView):
-    template_name = 'Template/sitemap.html'
-    model = Post
-    context_object_name = 'post'
-    paginate_by = 1000
+        return context
 
 
 class YandexTurbo(ListView):
-    template_name = 'turbo.xml'
+    template_name = 'theme/addon/yandex_turbo/turbo.xml'
     model = Post
     context_object_name = 'turbo'
     paginate_by = 1000
