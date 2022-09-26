@@ -24,7 +24,7 @@ SECRET_KEY = 'django-insecure-bdh6gm+sd+yq$4()fh45w_@kva_^!vxcl8mav1c$p&rko7wu85
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['my-tips.ru', '62.113.99.151', '', 'localhost']
+ALLOWED_HOSTS = ['my-tips.ru', '62.113.99.151', '', 'localhost', '127.0.0.1']
 
 SITE_ID = 1
 
@@ -196,11 +196,11 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-# STATICFILES_DIRS = [
-#    BASE_DIR / "static",
-#    ]
+STATICFILES_DIRS = [
+   BASE_DIR / "static",
+   ]
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
+# STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 
 CKEDITOR_UPLOAD_PATH = 'images'
 

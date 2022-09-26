@@ -5,13 +5,14 @@ from urllib.error import URLError, HTTPError
 from django.core.files.base import File
 from django.core.files.temp import NamedTemporaryFile
 from django.views.generic import ListView, TemplateView
+from django.views.decorators.csrf import csrf_protect
 from pytils.translit import slugify
 from randomfilestorage.storage import RandomFileSystemStorage
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from blog.models import Post
+from blog.models import Post, Galery
 
 
 class Index(TemplateView):
@@ -71,51 +72,53 @@ class ParceObjects(APIView):
     """
     Класс DRF создания поста в блог используя API
     """
-    image = []
 
-    def get(self, request, *args, **kwargs):
-        try:
-            return Response("")
-        except:
-            return Response("")
+    def change_content(self, galery: list, post):
+        content = post.content.split('\n')
+        for tag in range(len(content)):
+            for image_link in galery:
+                if 'itemprop' in content[tag]:
+                    content[tag] = (
+                        f'<p><span itemprop="image" itemscope=""><img itemprop="url image" loading="lazy" class="size-full wp-image-4784 aligncenter" src={image_link} alt="" width="600" height="800" sizes="(max-width: 600px) 100vw, 600px"><meta itemprop="width" content="600"><meta itemprop="height" content="800"></span></p>')
+
+        content = "".join(content)
+
+        print(f"================================================")
+
+        Post.objects.filter(id=post.id).update(content=content)
+
+    def save_images_to_galery(self, title, images: list, post):
+        count = 0
+        galery = []
+        for image in images:  # получаю список с ссылками на фото
+            count += 1
+            img_temp = NamedTemporaryFile()
+            img_temp.write(urllib2.urlopen(image).read())
+            img_temp.flush()
+            photo = Galery.objects.create(image=File(img_temp, name=f'{title}-{count}.jpg'), post=post)
+            galery.append(photo.image.url)
+
+        self.change_content(galery, post)
 
     def post(self, request):
-
         try:
-            if len(self.image) >= 10:
-                self.image.remove(self.image[0])
-
             form = request.data
             title = form['title']
-            new_string = re.sub(r'[^\w\s]', '', title)
-            slug = slugify(new_string)
 
-            count = Post.objects.all().count()
-            current_slug = f'{slug}-{int(count) + 1}'
+            slug = slugify(title)
 
-            self.image.append(form['image'])
-            img_temp = NamedTemporaryFile()
-            img_temp.write(urllib2.urlopen(form['image']).read())
-            img_temp.flush()
-            Post.objects.create(title=form['title'], content=form['content'], image=File(img_temp, name=f'{title}.jpg'),
-                                slug=current_slug)
-            return Response('', status=status.HTTP_201_CREATED)
-        except (ValueError, OSError, URLError, HTTPError):
-            form = request.data
-            form['image'] = choice(self.image)
-            title = form['title']
-            new_string = re.sub(r'[^\w\s]', '', title)
-            slug = slugify(new_string)
-
-            count = Post.objects.all().count()
-            current_slug = f'{slug}-{int(count) + 1}'
+            amount_of_posts = Post.objects.all().count()
+            slug = f'{slug}-{int(amount_of_posts) + 1}'
 
             img_temp = NamedTemporaryFile()
             img_temp.write(urllib2.urlopen(form['image']).read())
             img_temp.flush()
+            post = Post.objects.create(title=form['title'], content=form['content'],
+                                       image=File(img_temp, name=f'{title}.jpg'),
+                                       slug=slug)
 
-            Post.objects.create(title=form['title'], content=form['content'], image=File(img_temp, name=f'{title}.jpg'),
-                                slug=current_slug)
+            self.save_images_to_galery(title, form['img_list'], post)
+
             return Response('', status=status.HTTP_201_CREATED)
         except:
-            return Response('Invalid data ', status=status.HTTP_200_OK)
+            return Response('Invalid data', status=status.HTTP_400_BAD_REQUEST)

@@ -27,3 +27,8 @@ class Post(models.Model):
 
     def get_absolute_url(self, **kwargs):
         return f'/post/{self.slug}'
+
+
+class Galery(models.Model):
+    image = models.ImageField(upload_to='galery', verbose_name='Изображение', )
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='images', default=None)
