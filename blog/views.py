@@ -1,11 +1,8 @@
-import re
+from itertools import count
 import urllib.request as urllib2
-from random import choice
-from urllib.error import URLError, HTTPError
 from django.core.files.base import File
 from django.core.files.temp import NamedTemporaryFile
 from django.views.generic import ListView, TemplateView
-from django.views.decorators.csrf import csrf_protect
 from pytils.translit import slugify
 from randomfilestorage.storage import RandomFileSystemStorage
 from rest_framework import status
@@ -75,15 +72,16 @@ class ParceObjects(APIView):
 
     def change_content(self, galery: list, post):
         content = post.content.split('\n')
-        for tag in range(len(content)):
-            for image_link in galery:
-                if 'itemprop' in content[tag]:
-                    content[tag] = (
-                        f'<p><span itemprop="image" itemscope=""><img itemprop="url image" loading="lazy" class="size-full wp-image-4784 aligncenter" src={image_link} alt="" width="600" height="800" sizes="(max-width: 600px) 100vw, 600px"><meta itemprop="width" content="600"><meta itemprop="height" content="800"></span></p>')
+        count = 0
+        for tag in range(0, len(content)):
+            if 'itemprop' in content[tag]:
+                print(f"==============================================")
+                content[tag] = (
+                    f'<p><span itemprop="image" itemscope=""><img itemprop="url image" loading="lazy" class="size-full wp-image-4784 aligncenter" src={galery[count]} alt="" width="600" height="800" sizes="(max-width: 600px) 100vw, 600px"><meta itemprop="width" content="600"><meta itemprop="height" content="800"></span></p>')
+                count += 1
 
         content = "".join(content)
 
-        print(f"================================================")
 
         Post.objects.filter(id=post.id).update(content=content)
 
