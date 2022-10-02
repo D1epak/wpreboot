@@ -1,5 +1,6 @@
 from itertools import count
-import urllib.request as urllib2
+from urllib3.exceptions import InsecureRequestWarning
+from urllib3 import disable_warnings
 from django.core.files.base import File
 from django.core.files.temp import NamedTemporaryFile
 from django.views.generic import ListView, TemplateView
@@ -8,8 +9,11 @@ from randomfilestorage.storage import RandomFileSystemStorage
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
 from blog.models import Post, Galery
+
+import requests
+import ssl
+import urllib.request as urllib2
 
 
 class Index(TemplateView):
@@ -69,13 +73,15 @@ class ParceObjects(APIView):
     """
     Класс DRF создания поста в блог используя API
     """
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
 
     def change_content(self, galery: list, post):
         content = post.content.split('\n')
         count = 0
         for tag in range(0, len(content)):
             if 'itemprop' in content[tag]:
-                print(f"==============================================")
                 content[tag] = (
                     f'<p><span itemprop="image" itemscope=""><img itemprop="url image" loading="lazy" class="size-full wp-image-4784 aligncenter" src={galery[count]} alt="" width="600" height="800" sizes="(max-width: 600px) 100vw, 600px"><meta itemprop="width" content="600"><meta itemprop="height" content="800"></span></p>')
                 count += 1
@@ -91,7 +97,7 @@ class ParceObjects(APIView):
         for image in images:  # получаю список с ссылками на фото
             count += 1
             img_temp = NamedTemporaryFile()
-            img_temp.write(urllib2.urlopen(image).read())
+            img_temp.write(urllib2.urlopen(image, context=False).read())
             img_temp.flush()
             photo = Galery.objects.create(image=File(img_temp, name=f'{title}-{count}.jpg'), post=post)
             galery.append(photo.image.url)
@@ -109,7 +115,9 @@ class ParceObjects(APIView):
             slug = f'{slug}-{int(amount_of_posts) + 1}'
 
             img_temp = NamedTemporaryFile()
-            img_temp.write(urllib2.urlopen(form['image']).read())
+            req = requests.get(form['image'], verify=False).content
+            print(f'===================')
+            img_temp.write(req)
             img_temp.flush()
             post = Post.objects.create(title=form['title'], content=form['content'],
                                        image=File(img_temp, name=f'{title}.jpg'),
@@ -118,5 +126,7 @@ class ParceObjects(APIView):
             self.save_images_to_galery(title, form['img_list'], post)
 
             return Response('', status=status.HTTP_201_CREATED)
-        except:
-            return Response('Invalid data', status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(e)
+            raise e 
+            return Response(f'{e}', status=status.HTTP_400_BAD_REQUEST)
