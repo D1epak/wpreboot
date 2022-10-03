@@ -73,15 +73,15 @@ class ParceObjects(APIView):
     """
     Класс DRF создания поста в блог используя API
     """
-    ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE
+    post_content = ""
 
     def change_content(self, galery: list, post):
-        content = post.content.split('\n')
+        content = self.post_content
         count = 0
+        print('=======================')
         for tag in range(0, len(content)):
-            if 'itemprop' in content[tag]:
+            if 'img' in content[tag]:
+                print(content[tag])
                 content[tag] = (
                     f'<p><span itemprop="image" itemscope=""><img itemprop="url image" loading="lazy" class="size-full wp-image-4784 aligncenter" src={galery[count]} alt="" width="600" height="800" sizes="(max-width: 600px) 100vw, 600px"><meta itemprop="width" content="600"><meta itemprop="height" content="800"></span></p>')
                 count += 1
@@ -94,10 +94,12 @@ class ParceObjects(APIView):
     def save_images_to_galery(self, title, images: list, post):
         count = 0
         galery = []
+        disable_warnings(InsecureRequestWarning)
         for image in images:  # получаю список с ссылками на фото
             count += 1
             img_temp = NamedTemporaryFile()
-            img_temp.write(urllib2.urlopen(image, context=False).read())
+            req = requests.get(image, verify=False).content
+            img_temp.write(req)
             img_temp.flush()
             photo = Galery.objects.create(image=File(img_temp, name=f'{title}-{count}.jpg'), post=post)
             galery.append(photo.image.url)
@@ -108,18 +110,16 @@ class ParceObjects(APIView):
         try:
             form = request.data
             title = form['title']
+            self.post_content = form['content']
 
             slug = slugify(title)
-
             amount_of_posts = Post.objects.all().count()
             slug = f'{slug}-{int(amount_of_posts) + 1}'
-
             img_temp = NamedTemporaryFile()
             req = requests.get(form['image'], verify=False).content
-            print(f'===================')
             img_temp.write(req)
             img_temp.flush()
-            post = Post.objects.create(title=form['title'], content=form['content'],
+            post = Post.objects.create(title=form['title'], content="".join(form['content']),
                                        image=File(img_temp, name=f'{title}.jpg'),
                                        slug=slug)
 
@@ -127,6 +127,5 @@ class ParceObjects(APIView):
 
             return Response('', status=status.HTTP_201_CREATED)
         except Exception as e:
-            print(e)
-            raise e 
+            raise e
             return Response(f'{e}', status=status.HTTP_400_BAD_REQUEST)
