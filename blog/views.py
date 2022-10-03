@@ -1,4 +1,3 @@
-from itertools import count
 from urllib3.exceptions import InsecureRequestWarning
 from urllib3 import disable_warnings
 from django.core.files.base import File
@@ -12,8 +11,7 @@ from rest_framework.views import APIView
 from blog.models import Post, Galery
 
 import requests
-import ssl
-import urllib.request as urllib2
+import re
 
 
 class Index(TemplateView):
@@ -74,20 +72,24 @@ class ParceObjects(APIView):
     Класс DRF создания поста в блог используя API
     """
     post_content = ""
+    post_image_list = ""
 
     def change_content(self, galery: list, post):
         content = self.post_content
-        count = 0
-        print('=======================')
+        print(content)
+        print(galery, self.post_image_list)
         for tag in range(0, len(content)):
             if 'img' in content[tag]:
-                print(content[tag])
-                content[tag] = (
-                    f'<p><span itemprop="image" itemscope=""><img itemprop="url image" loading="lazy" class="size-full wp-image-4784 aligncenter" src={galery[count]} alt="" width="600" height="800" sizes="(max-width: 600px) 100vw, 600px"><meta itemprop="width" content="600"><meta itemprop="height" content="800"></span></p>')
-                count += 1
+                matches = len(re.findall(r'\ssrc="([^"]+)"', content[tag]))
+                mapping = dict(zip(self.post_image_list[:matches], galery[:matches]))
+
+                del self.post_image_list[:matches]
+                del galery[:matches]
+
+                for image_src, image_dst in mapping.items():
+                    content[tag] = content[tag].replace(image_src, image_dst)
 
         content = "".join(content)
-
 
         Post.objects.filter(id=post.id).update(content=content)
 
@@ -111,7 +113,7 @@ class ParceObjects(APIView):
             form = request.data
             title = form['title']
             self.post_content = form['content']
-
+            self.post_image_list = form['img_list']
             slug = slugify(title)
             amount_of_posts = Post.objects.all().count()
             slug = f'{slug}-{int(amount_of_posts) + 1}'
@@ -123,7 +125,7 @@ class ParceObjects(APIView):
                                        image=File(img_temp, name=f'{title}.jpg'),
                                        slug=slug)
 
-            self.save_images_to_galery(title, form['img_list'], post)
+            self.save_images_to_galery(title, self.post_image_list, post)
 
             return Response('', status=status.HTTP_201_CREATED)
         except Exception as e:
