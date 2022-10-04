@@ -10,7 +10,7 @@ class Post(models.Model):
     title = models.CharField(max_length=500, verbose_name='Заголовок поста', )
     content = RichTextUploadingField(verbose_name='Содержимое поста', )
     date = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
-    slug = models.SlugField(unique=True, null=False, blank=False, default=slugify(title), verbose_name='Ссылка')
+    slug = models.SlugField(max_length=200, unique=True, null=False, blank=False, default=slugify(title), verbose_name='Ссылка')
 
     class Meta:
         verbose_name = 'Пост на сайте'

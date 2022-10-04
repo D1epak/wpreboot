@@ -76,8 +76,6 @@ class ParceObjects(APIView):
 
     def change_content(self, galery: list, post):
         content = self.post_content
-        print(content)
-        print(galery, self.post_image_list)
         for tag in range(0, len(content)):
             if 'img' in content[tag]:
                 matches = len(re.findall(r'\ssrc="([^"]+)"', content[tag]))
@@ -127,7 +125,6 @@ class ParceObjects(APIView):
 
             self.save_images_to_galery(title, self.post_image_list, post)
 
-            return Response('', status=status.HTTP_201_CREATED)
+            return Response('Post Created', status=status.HTTP_201_CREATED)
         except Exception as e:
-            raise e
-            return Response(f'{e}', status=status.HTTP_400_BAD_REQUEST)
+            return Response(e, status=status.HTTP_400_BAD_REQUEST)
